@@ -83,7 +83,7 @@ export default function App() {
                 gap: '8px',
               }}
             >
-              <span>📚</span> All 17 Concepts & Hooks
+              <span>📚</span> All {TOPICS.length} Concepts & Hooks
             </button>
             <button
               onClick={() => setViewMode('comparisons')}
@@ -223,7 +223,7 @@ export default function App() {
               You are currently viewing <strong>{viewMode === 'comparisons' ? 'Hook Comparisons' : 'Interview Q&A'}</strong>.
             </p>
             <p style={{ marginTop: '8px' }}>
-              Click <strong>"All 17 Concepts & Hooks"</strong> above to return to individual hook demos and code playgrounds.
+              Click <strong>&quot;All {TOPICS.length} Concepts & Hooks&quot;</strong> above to return to individual hook demos and code playgrounds.
             </p>
           </div>
         )}

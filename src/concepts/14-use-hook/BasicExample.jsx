@@ -1,60 +1,171 @@
 import { createContext, use, useState } from 'react';
 
-// Sample configuration context
-const ConfigContext = createContext({
-  apiKey: 'live_pk_9948271',
-  environment: 'production',
-  maxRetries: 3,
+// Context 1: Base Application Config
+const WorkspaceConfigContext = createContext({
+  orgName: 'Acme Global Cloud',
+  region: 'us-east-1',
 });
 
-function ConditionalSettings({ showSecretConfig }) {
-  if (showSecretConfig) {
-    // ✨ REACT 19 SUPERPOWER: Calling `use()` inside an IF block!
-    // This was strictly forbidden and impossible with `useContext`!
-    const config = use(ConfigContext);
+// Context 2: Premium Analytics Engine (Only consumed by Pro/Enterprise tiers)
+const AnalyticsEngineContext = createContext({
+  realtimeTrafficMonitoring: true,
+  exportToBigQuery: true,
+  retentionDays: 90,
+});
 
-    return (
-      <div style={{ padding: '12px', background: '#0b1120', borderRadius: '6px', border: '1px solid var(--accent)' }}>
-        <p style={{ color: 'var(--accent)', fontWeight: 'bold' }}>🔒 Sensitive Configuration (Unlocked):</p>
-        <p style={{ fontSize: '13px', marginTop: '4px' }}>API Key: <code>{config.apiKey}</code></p>
-        <p style={{ fontSize: '13px' }}>Environment: {config.environment}</p>
-        <p style={{ fontSize: '13px' }}>Max Retries: {config.maxRetries}</p>
-      </div>
-    );
+// Context 3: Enterprise Security & Secrets Vault (Only consumed by Enterprise tier)
+const EnterpriseSecurityContext = createContext({
+  kmsKeyId: 'kms_arn_0982716298102',
+  auditLoggingEnabled: true,
+  ipWhitelisting: ['192.168.1.0/24', '10.0.0.0/16'],
+});
+
+function DynamicWorkspaceDashboard({ userTier }) {
+  // Always read the base workspace context
+  const baseConfig = use(WorkspaceConfigContext);
+
+  // ✨ REACT 19 BREAKTHROUGH: Conditional Context Reading with use()!
+  // In React 16-18, calling useContext inside an if-statement was a fatal Rules of Hooks violation.
+  let analyticsConfig = null;
+  if (userTier === 'pro' || userTier === 'enterprise') {
+    analyticsConfig = use(AnalyticsEngineContext);
+  }
+
+  let securityConfig = null;
+  if (userTier === 'enterprise') {
+    securityConfig = use(EnterpriseSecurityContext);
   }
 
   return (
-    <div style={{ color: 'var(--text-muted)', fontSize: '13px' }}>
-      ⚪ Standard View: Sensitive settings are hidden. (No context evaluated).
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+      {/* Base Organization Card */}
+      <div
+        style={{
+          padding: '14px',
+          background: '#0b1120',
+          borderRadius: '6px',
+          border: '1px solid var(--border-color)',
+        }}
+      >
+        <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+          Base Workspace Configuration
+        </div>
+        <strong style={{ fontSize: '15px', color: 'var(--primary)' }}>{baseConfig.orgName}</strong>
+        <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
+          Assigned Data Center: <code>{baseConfig.region}</code>
+        </div>
+      </div>
+
+      {/* Conditional Analytics Card */}
+      {analyticsConfig ? (
+        <div
+          style={{
+            padding: '14px',
+            background: 'rgba(56, 189, 248, 0.05)',
+            borderRadius: '6px',
+            border: '1px solid rgba(56, 189, 248, 0.3)',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <strong style={{ fontSize: '13px', color: 'var(--primary)' }}>
+              ⚡ Advanced Analytics Engine (Conditional Read via use())
+            </strong>
+            <span style={{ fontSize: '11px', color: 'var(--success)', fontWeight: 'bold' }}>ACTIVE</span>
+          </div>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '6px', display: 'flex', gap: '14px' }}>
+            <span>Telemetry: <strong>Active (24/7)</strong></span>
+            <span>Data Retention: <strong>{analyticsConfig.retentionDays} Days</strong></span>
+            <span>BigQuery Export: <strong>Enabled</strong></span>
+          </div>
+        </div>
+      ) : (
+        <div style={{ padding: '10px 14px', background: 'rgba(255,255,255,0.02)', borderRadius: '6px', fontSize: '12px', color: 'var(--text-muted)' }}>
+          ⚪ Analytics context skipped (Available on Pro &amp; Enterprise).
+        </div>
+      )}
+
+      {/* Conditional Enterprise Security Card */}
+      {securityConfig ? (
+        <div
+          style={{
+            padding: '14px',
+            background: 'rgba(248, 113, 113, 0.05)',
+            borderRadius: '6px',
+            border: '1px solid rgba(248, 113, 113, 0.3)',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <strong style={{ fontSize: '13px', color: 'var(--danger)' }}>
+              🔒 Enterprise Secrets Vault (Conditional Read via use())
+            </strong>
+            <span style={{ fontSize: '11px', color: 'var(--danger)', fontWeight: 'bold' }}>GATED</span>
+          </div>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '6px' }}>
+            KMS Key ARN: <code>{securityConfig.kmsKeyId}</code>
+          </div>
+          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
+            Subnet Whitelisting: {securityConfig.ipWhitelisting.join(', ')}
+          </div>
+        </div>
+      ) : (
+        <div style={{ padding: '10px 14px', background: 'rgba(255,255,255,0.02)', borderRadius: '6px', fontSize: '12px', color: 'var(--text-muted)' }}>
+          ⚪ Enterprise security vault skipped (Requires Enterprise Tier).
+        </div>
+      )}
     </div>
   );
 }
 
 export default function BasicExample() {
-  const [showSecret, setShowSecret] = useState(false);
+  const [tier, setTier] = useState('free'); // 'free' | 'pro' | 'enterprise'
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       <div>
-        <h3>Conditional Context Reading with <code>use()</code></h3>
-        <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '16px' }}>
-          Traditional hooks like <code>useContext</code> throw errors if placed inside an <code>if</code> statement. React 19's <code>use()</code> works anywhere!
+        <h3 style={{ marginBottom: '4px' }}>Conditional Context Consumption via use() API</h3>
+        <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>
+          React 19&apos;s <code>use()</code> can be invoked inside <code>if</code> statements, loops, and switches.
+          This completely removes the historical restriction where hooks had to be top-level unconditionally.
         </p>
-
-        <button
-          onClick={() => setShowSecret((prev) => !prev)}
-          style={{
-            background: showSecret ? 'var(--warning)' : 'var(--primary)',
-            color: '#0f172a',
-            fontWeight: 'bold',
-            marginBottom: '16px',
-          }}
-        >
-          {showSecret ? 'Hide Secrets' : 'Reveal Conditional Secrets (inside IF)'}
-        </button>
-
-        <ConditionalSettings showSecretConfig={showSecret} />
       </div>
+
+      {/* Tier Switcher Controls */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          padding: '12px 16px',
+          background: '#0b1120',
+          borderRadius: '8px',
+          border: '1px solid var(--border-color)',
+        }}
+      >
+        <span style={{ fontSize: '12px', fontWeight: 'bold' }}>Simulate User Plan:</span>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          {[
+            { id: 'free', label: 'Starter (Free)' },
+            { id: 'pro', label: 'Developer (Pro)' },
+            { id: 'enterprise', label: 'Corporate (Enterprise)' },
+          ].map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setTier(t.id)}
+              style={{
+                fontSize: '12px',
+                padding: '6px 12px',
+                background: tier === t.id ? 'var(--primary)' : 'rgba(255,255,255,0.05)',
+                color: tier === t.id ? '#0f172a' : 'var(--text-main)',
+                fontWeight: tier === t.id ? 'bold' : 'normal',
+              }}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <DynamicWorkspaceDashboard userTier={tier} />
     </div>
   );
 }

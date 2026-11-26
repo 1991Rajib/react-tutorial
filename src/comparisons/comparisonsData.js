@@ -201,4 +201,40 @@ const theme = useContext(ThemeContext);`,
     },
     ruleOfThumb: 'use() is a generalized reading primitive for resources. In React 19, use() can replace useContext and unlocks conditional reads.',
   },
+
+  {
+    id: 'effect-vs-layouteffect',
+    title: 'useEffect vs useLayoutEffect',
+    tagline: 'Asynchronous (after screen paint) vs Synchronous (before screen paint)',
+    whenToUse: {
+      left: {
+        name: 'useEffect',
+        bestFor: [
+          'Runs ASYNCHRONOUSLY after the browser has painted pixels to screen',
+          'Does NOT block the browser thread or delay visual painting',
+          'Data fetching, event listeners, document title, analytics, timers',
+          'The correct default choice for 98% of React side-effects',
+        ],
+        codeSnippet: `useEffect(() => {
+  // Runs AFTER paint — non-blocking!
+  fetchUserData(userId).then(setData);
+}, [userId]);`,
+      },
+      right: {
+        name: 'useLayoutEffect',
+        bestFor: [
+          'Runs SYNCHRONOUSLY right after React DOM mutations, BEFORE paint',
+          'Measuring DOM layout (getBoundingClientRect, scrollHeight, offsetTop)',
+          'Positioning dynamic tooltips, popovers, dropdowns without visual flicker',
+          'Synchronous DOM manipulations that would cause visual jump if delayed',
+        ],
+        codeSnippet: `useLayoutEffect(() => {
+  // Runs BEFORE paint — prevents visual flicker!
+  const rect = ref.current.getBoundingClientRect();
+  setHeight(rect.height);
+}, []);`,
+      },
+    },
+    ruleOfThumb: 'Always start with useEffect. Only switch to useLayoutEffect if your effect mutates the DOM or sets state based on DOM measurements that causes noticeable screen flickering.',
+  },
 ];

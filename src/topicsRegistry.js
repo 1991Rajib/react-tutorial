@@ -49,6 +49,9 @@ import DocMetadataAdv from './concepts/16-document-metadata/AdvancedExample.jsx'
 import MemoBasic from './concepts/17-memo/BasicExample.jsx';
 import MemoAdv from './concepts/17-memo/AdvancedExample.jsx';
 
+import UseLayoutEffectBasic from './concepts/18-useLayoutEffect/BasicExample.jsx';
+import UseLayoutEffectAdv from './concepts/18-useLayoutEffect/AdvancedExample.jsx';
+
 export const TOPICS = [
   // --- Category 1: React 16 Foundations Modernized ---
   {
@@ -120,6 +123,16 @@ export const TOPICS = [
     folder: 'src/concepts/17-memo',
     BasicComponent: MemoBasic,
     AdvancedComponent: MemoAdv,
+  },
+  {
+    id: '18-useLayoutEffect',
+    name: 'useLayoutEffect',
+    version: 'React 16+',
+    category: 'Foundations (Modernized)',
+    summary: 'Synchronous execution before browser paint for layout measurements and zero-flicker UI updates.',
+    folder: 'src/concepts/18-useLayoutEffect',
+    BasicComponent: UseLayoutEffectBasic,
+    AdvancedComponent: UseLayoutEffectAdv,
   },
 
   // --- Category 2: React 18 Concurrency & Accessibility ---

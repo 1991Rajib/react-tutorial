@@ -492,4 +492,26 @@ How useSyncExternalStore Fixes It:
 useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot) forces React to synchronously read from external stores, guaranteeing zero tearing across concurrent renders.
 It is the standard foundation for all modern state libraries.`,
   },
+  {
+    id: 'q26',
+    category: 'Performance & Optimization',
+    question: 'What is the key difference between useEffect and useLayoutEffect, and when is useLayoutEffect strictly required?',
+    answer: `The core difference is execution timing in the React render-commit-paint pipeline:
+
+1. useEffect (Asynchronous / Post-Paint):
+• Execution: Fires asynchronously AFTER React commits changes to the DOM and the browser paints pixels to the screen.
+• Impact: Non-blocking. Does not delay screen painting or degrade interaction responsiveness.
+• Use Cases: API requests, WebSocket subscriptions, document title updates, logging, setTimeout timers.
+
+2. useLayoutEffect (Synchronous / Pre-Paint):
+• Execution: Fires SYNCHRONOUSLY after React commits DOM mutations, but BEFORE the browser paints pixels on screen.
+• Impact: Blocking. The browser cannot paint until useLayoutEffect completes. If you call setState inside it, React schedules another render pass and finishes it BEFORE the paint!
+• Use Cases: Measuring DOM dimensions (getBoundingClientRect, scrollHeight, clientWidth) and adjusting layout, positioning floating tooltips/popovers/modals, or restoring scroll positions without screen flicker.
+
+Why not use useLayoutEffect everywhere?
+Because it blocks browser painting. Overusing it degrades UI frame rates, causing laggy scrolling and unresponsive clicks.
+
+SSR Caveat:
+useLayoutEffect does not execute during Server-Side Rendering (Next.js/Node) and emits a console warning. For SSR-safe code, use standard useEffect or conditionally run it only in the browser (typeof window !== 'undefined').`,
+  },
 ];

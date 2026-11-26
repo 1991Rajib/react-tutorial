@@ -1079,4 +1079,70 @@ function CustomInput({ ref, label, ...props }) {
     ],
     keyTakeaway: 'Built right into core React without any external dependencies.',
   },
+
+  '18-useLayoutEffect': {
+    title: 'useLayoutEffect: Synchronous DOM Measurement',
+    version: 'React 16+',
+    importSnippet: `import { useLayoutEffect } from 'react';`,
+    signature: `useLayoutEffect(setupFunction, dependencyArray?);`,
+    parameters: [
+      {
+        name: 'setupFunction',
+        type: '() => void | (() => void)',
+        required: true,
+        description: 'Synchronous side-effect function that runs after DOM mutations but BEFORE the browser paints. Can return an optional cleanup function.',
+      },
+      {
+        name: 'dependencyArray',
+        type: 'any[] (optional)',
+        required: false,
+        description: 'Reactive dependencies. If omitted, runs after every render. If [], runs on mount/unmount. If [a, b], runs when dependencies change.',
+      },
+    ],
+    returns: [
+      {
+        name: 'undefined',
+        type: 'void',
+        description: 'useLayoutEffect returns nothing.',
+      },
+    ],
+    howToWriteSteps: [
+      {
+        step: 1,
+        title: 'Import useLayoutEffect from react',
+        code: `import { useLayoutEffect, useRef, useState } from 'react';`,
+        explanation: 'Has the identical signature to useEffect, but different execution timing.',
+      },
+      {
+        step: 2,
+        title: 'Measure DOM nodes and synchronously adjust layout',
+        code: `useLayoutEffect(() => {
+  const { height } = tooltipRef.current.getBoundingClientRect();
+  if (height > maxAllowedHeight) {
+    setPosition('top'); // React re-renders BEFORE the browser paints! Zero flicker.
+  }
+}, [isOpen]);`,
+        explanation: 'React runs this synchronously right after DOM mutations. Any state updates triggered here are flushed before the screen is painted, preventing visual jank or flicker.',
+      },
+    ],
+    whyItMatters: 'Guarantees the user never sees intermediate or uncalculated layout positions.',
+    react16VsModern: `• Render-Commit-Paint Pipeline:
+  1. Render phase: Component executes, calculates virtual DOM.
+  2. Commit phase: React applies mutations to the real DOM.
+  3. useLayoutEffect runs SYNCHRONOUSLY: Inspects/measures DOM. If it updates state, React recalculates before the browser can paint.
+  4. Browser Paint: The browser paints pixels onto the screen for the user.
+  5. useEffect runs ASYNCHRONOUSLY: React fires useEffect after paint.
+• SSR Warning: In Server-Side Rendering (Next.js/Node), neither DOM nor painting exists. useLayoutEffect triggers a warning on the server. Use useEffect or an isomorphic wrapper for SSR safe code.`,
+    commonMistakes: [
+      {
+        mistake: 'Using useLayoutEffect by default for all side-effects (data fetching, subscriptions).',
+        solution: 'useLayoutEffect blocks browser painting and can hurt page performance and frame rates. Use standard useEffect for 98% of effects, reserving useLayoutEffect strictly for DOM measurements and flicker prevention.',
+      },
+      {
+        mistake: 'Calling useLayoutEffect in Next.js Server Components or SSR code without a window check.',
+        solution: 'Guard with typeof window !== "undefined" or use standard useEffect on the server.',
+      },
+    ],
+    keyTakeaway: 'Use useEffect by default. Only reach for useLayoutEffect when you must measure DOM layout and update state before the user sees the screen.',
+  },
 };

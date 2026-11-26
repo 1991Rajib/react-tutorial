@@ -1,7 +1,7 @@
 import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 
-// Decoupled reusable button - knows nothing about the form logic!
+// DECOUPLED CHILD 1: Reusable Submit Button (No props passed!)
 function SubmitButton() {
   const { pending } = useFormStatus();
 
@@ -10,49 +10,147 @@ function SubmitButton() {
       type="submit"
       disabled={pending}
       style={{
-        background: pending ? 'var(--border-color)' : 'var(--primary)',
+        background: pending ? 'rgba(255,255,255,0.06)' : 'var(--primary)',
         color: pending ? 'var(--text-muted)' : '#0f172a',
         fontWeight: 'bold',
-        padding: '8px 16px',
+        padding: '10px 18px',
+        fontSize: '13px',
+        borderRadius: '6px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
       }}
     >
-      {pending ? 'Submitting Form... ⏳' : 'Submit'}
+      <span>{pending ? 'Submitting Issue...' : 'File Engineering Ticket'}</span>
+      {pending && <span style={{ animation: 'spin 1s linear infinite' }}>⏳</span>}
     </button>
   );
 }
 
-async function simpleAction(prevState, formData) {
-  await new Promise((resolve) => setTimeout(resolve, 1500));
-  return `Successfully saved: ${formData.get('feedback')}`;
+// DECOUPLED CHILD 2: Contextual Status Banner reading in-flight formData
+function InFlightPayloadPreview() {
+  const { pending, data } = useFormStatus();
+
+  if (!pending || !data) return null;
+
+  const ticketTitle = data.get('title');
+  const priority = data.get('priority');
+
+  return (
+    <div
+      style={{
+        padding: '10px 14px',
+        borderRadius: '6px',
+        background: 'rgba(251, 191, 36, 0.1)',
+        border: '1px solid rgba(251, 191, 36, 0.3)',
+        fontSize: '12px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '4px',
+      }}
+    >
+      <div style={{ color: '#fbbf24', fontWeight: 'bold' }}>
+        ⚡ Transmitting Payload to Jira Service Desk:
+      </div>
+      <div style={{ color: 'var(--text-main)', fontFamily: 'monospace' }}>
+        Title: &quot;{ticketTitle}&quot; | Priority: {priority}
+      </div>
+    </div>
+  );
+}
+
+// Simulated server action
+async function createTicketAction(prevState, formData) {
+  const title = formData.get('title')?.toString().trim();
+  const priority = formData.get('priority')?.toString();
+
+  await new Promise((resolve) => setTimeout(resolve, 1400));
+
+  return {
+    id: `TICK-${Math.floor(1000 + Math.random() * 9000)}`,
+    title,
+    priority,
+    createdTime: new Date().toLocaleTimeString(),
+  };
 }
 
 export default function BasicExample() {
-  const [result, formAction] = useActionState(simpleAction, null);
+  const [createdTicket, formAction] = useActionState(createTicketAction, null);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       <div>
-        <h3>Decoupled Submit Button</h3>
-        <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '16px' }}>
-          Notice: <code>SubmitButton</code> takes zero props. It reads <code>pending</code> automatically from the parent <code>&lt;form&gt;</code>!
+        <h3 style={{ marginBottom: '4px' }}>Child Component Context via useFormStatus</h3>
+        <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>
+          <code>useFormStatus</code> lets deeply nested child components read the parent <code>&lt;form&gt;</code> status
+          (including <code>pending</code> and active <code>data</code>) without any prop drilling!
         </p>
+      </div>
 
-        <form action={formAction} style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxWidth: '400px' }}>
-          <textarea
-            name="feedback"
-            placeholder="Type some feedback..."
-            rows={3}
-            required
-            style={{ width: '100%' }}
-          />
+      <div
+        style={{
+          background: '#0b1120',
+          padding: '24px',
+          borderRadius: '8px',
+          border: '1px solid var(--border-color)',
+          maxWidth: '520px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '16px',
+        }}
+      >
+        <form action={formAction} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', marginBottom: '4px' }}>
+              Ticket Summary:
+            </label>
+            <input
+              name="title"
+              type="text"
+              placeholder="e.g. Memory leak in high-throughput websocket client"
+              required
+              style={{ width: '100%', padding: '8px 12px', fontSize: '13px' }}
+            />
+          </div>
 
-          <SubmitButton />
+          <div>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', marginBottom: '4px' }}>
+              Urgency Severity:
+            </label>
+            <select name="priority" style={{ width: '100%', padding: '8px 12px', fontSize: '13px' }}>
+              <option value="P1 - Critical Blocker">P1 - Critical Blocker</option>
+              <option value="P2 - High Severity">P2 - High Severity</option>
+              <option value="P3 - Routine Improvement">P3 - Routine Improvement</option>
+            </select>
+          </div>
+
+          <InFlightPayloadPreview />
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '6px' }}>
+            <SubmitButton />
+          </div>
         </form>
 
-        {result && (
-          <p style={{ color: 'var(--success)', fontSize: '13px', marginTop: '12px' }}>
-            ✓ {result}
-          </p>
+        {createdTicket && (
+          <div
+            style={{
+              padding: '12px 14px',
+              borderRadius: '6px',
+              background: 'rgba(52, 211, 153, 0.1)',
+              border: '1px solid rgba(52, 211, 153, 0.3)',
+              fontSize: '13px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '4px',
+            }}
+          >
+            <strong style={{ color: 'var(--success)' }}>
+              ✓ Ticket {createdTicket.id} Created!
+            </strong>
+            <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>
+              &quot;{createdTicket.title}&quot; [{createdTicket.priority}] filed at {createdTicket.createdTime}.
+            </span>
+          </div>
         )}
       </div>
     </div>
